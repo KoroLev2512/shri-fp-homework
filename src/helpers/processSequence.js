@@ -14,38 +14,66 @@
  * Иногда промисы от API будут приходить в состояние rejected, (прямо как и API в реальной жизни)
  * Ответ будет приходить в поле {result}
  */
- import Api from '../tools/api';
+import Api from '../tools/api';
 
- const api = new Api();
+const api = new Api();
 
- /**
-  * Я – пример, удали меня
-  */
- const wait = time => new Promise(resolve => {
-     setTimeout(resolve, time);
- })
+const isValidString = s =>
+  s.length < 10 &&
+  s.length > 2 &&
+  Number(s) > 0 &&
+  /^[0-9.]+$/.test(s);
 
- const processSequence = ({value, writeLog, handleSuccess, handleError}) => {
-     /**
-      * Я – пример, удали меня
-      */
-     writeLog(value);
-
-     api.get('https://api.tech/numbers/base', {from: 2, to: 10, number: '01011010101'}).then(({result}) => {
-         writeLog(result);
-     });
-
-     wait(2500).then(() => {
-         writeLog('SecondLog')
-
-         return wait(1500);
-     }).then(() => {
-         writeLog('ThirdLog');
-
-         return wait(400);
-     }).then(() => {
-         handleSuccess('Done');
-     });
- }
+const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
+  Promise.resolve(value)
+    .then(val => {
+      writeLog(val);
+      return val;
+    })
+    .then(val => {
+      if (!isValidString(val)) {
+        return Promise.reject('ValidationError');
+      }
+      return val;
+    })
+    .then(val => {
+      const rounded = Math.round(Number(val));
+      writeLog(rounded);
+      return rounded;
+    })
+    .then(num =>
+      api.get('https://api.tech/numbers/base')({ from: 10, to: 2, number: num })
+        .then(({ result }) => {
+          writeLog(result);
+          return result;
+        }),
+    )
+    .then(binary => {
+      writeLog(binary.length);
+      return binary.length;
+    })
+    .then(len => {
+      const squared = len * len;
+      writeLog(squared);
+      return squared;
+    })
+    .then(sq => {
+      const remainder = sq % 3;
+      writeLog(remainder);
+      return remainder;
+    })
+    .then(id =>
+      api.get(`https://animals.tech/${id}`)({})
+        .then(({ result }) => {
+          writeLog(result);
+          return result;
+        }),
+    )
+.then(handleSuccess)
+.catch(err => {
+      const message = err === 'ValidationError' ? 'ValidationError' : (err && err.message) || String(err);
+      handleError(message);
+    });
+};
 
 export default processSequence;
