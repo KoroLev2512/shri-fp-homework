@@ -26,14 +26,14 @@ const isValidString = s =>
   /^[0-9.]+$/.test(s);
 
 const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
-  Promise.resolve(value)
+  return Promise.resolve(value)
     .then(val => {
       writeLog(val);
       return val;
     })
     .then(val => {
       if (!isValidString(val)) {
-        return Promise.reject('ValidationError');
+        throw 'ValidationError';
       }
       return val;
     })
@@ -70,8 +70,8 @@ const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
           return result;
         }),
     )
-.then(handleSuccess)
-.catch(err => {
+    .then(handleSuccess)
+    .catch(err => {
       const message = err === 'ValidationError' ? 'ValidationError' : (err && err.message) || String(err);
       handleError(message);
     });
